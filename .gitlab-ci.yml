@@ -2,7 +2,7 @@
 # https://gitlab.com/rychly-edu/docker/docker-openwrt-sdk
 
 # Fixed OpenWrt version to rebuild on its version updates
-image: prajval7433/docker-openwrt-sdk:22.03.1-ipq40xx
+image: sturdynetoci/docker-openwrt-sdk:22.03.1-ipq40xx
 
 build:
   stage: build
