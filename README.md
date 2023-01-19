@@ -1,6 +1,6 @@
 # OpenWrt packages
 
-https://vOCI.gitlab.io/openwrt-packages/BRANCH_NAME_HERE
+https://vOCI.gitlab.io/sturdynet/openwrt-packages/BRANCH_NAME_HERE
 
 Custom packages for OpenWrt (source code and builds).
 
