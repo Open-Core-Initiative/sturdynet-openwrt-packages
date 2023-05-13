@@ -1,4 +1,4 @@
-name: ci
+name: building sturdynet packages
 
 on:
   push:
@@ -12,8 +12,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - run: ls && pwd
+      - run: export MAKEFLAGS="${MAKEFLAGS} OUTPUT_DIR=${{ github.workspace }}/bin -s"
+      - run: /add-custom-local-feed.sh "${{ github.workspace }}"
       - run: /install-custom-feed-packages.sh
+      - run: /reconfigure.sh
+      - run: /make-custom-feed-packages.sh
+      - run: /make-index.sh "${{ github.workspace }}/key-build"
+      - run: mkdir -p "${{ github.workspace }}/public/${{ github.head_ref }}"
+      - run: /generate-repository.sh "${{ github.workspace }}/public/${{ github.head_ref }}" "${{ github.workspace }}/key-build.pub" "${{ github.workspace }}/bin" "${{ github.workspace }}/47bc41ad54a6601d"
+      - run: mv LICENSE "${{ github.workspace }}/public/${{ github.head_ref }}"
+      - run: ./generate-webpage.sh "${{ github.workspace }}/public/${{ github.head_ref }}" > "${{ github.workspace }}/public/${{ github.head_ref }}/index.html"
+      - name: Use the Upload Artifact GitHub Action
+        uses: actions/upload-artifact@v2
+        with: 
+          name: ${{ github.head_ref }}
+          path: public
+
 #       - name: Login to Docker Hub
 #         uses: docker/login-action@v2
 #         with:
