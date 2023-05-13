@@ -12,7 +12,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - run: mkdir "${{ github.workspace }}/bin" && cd "${{ github.workspace }}/bin" && pwd
+      - run: echo ${{ github.workspace }}
+      - run: echo $GITHUB_WORKSPACE
 #       - run: export MAKEFLAGS="${MAKEFLAGS} OUTPUT_DIR=${PWD}/bin -s"
 #       - run: echo ${MAKEFLAGS}
 #       - run: echo ${PWD}
