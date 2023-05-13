@@ -14,10 +14,10 @@ jobs:
         uses: actions/checkout@v3
 #       - run: echo ${{ github.workspace }}
 #       - run: echo $GITHUB_WORKSPACE
-      - run: export MAKEFLAGS="${MAKEFLAGS} OUTPUT_DIR=$GITHUB_WORKSPACE/bin -s"
+      - run: export MAKEFLAGS="${MAKEFLAGS} OUTPUT_DIR=${GITHUB_WORKSPACE}/bin -s"
       - run: echo ${MAKEFLAGS}
-      - run: echo ${PWD}
-      - run: cd flow_broker && ls && cd ..
+      - run: echo ${GITHUB_WORKSPACE}
+#       - run: cd flow_broker && ls && cd ..
 #       - run: /add-custom-local-feed.sh .
 #       - run: /install-custom-feed-packages.sh
 #       - run: /reconfigure.sh
