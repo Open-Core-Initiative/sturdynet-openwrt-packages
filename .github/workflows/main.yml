@@ -27,6 +27,8 @@ jobs:
       - run: mkdir -p "${GITHUB_WORKSPACE}/bin"
       - run: echo "MAKEFLAGS=${MAKEFLAGS} OUTPUT_DIR=${GITHUB_WORKSPACE}/bin -s" >> $GITHUB_ENV
       - run: echo "${GITHUB_WORKSPACE}/public/${GITHUB_HEAD_REF}"
+      - run: echo "${GITHUB_WORKSPACE}"
+      - run: echo "${GITHUB_HEAD_REF}"
 #       - run: /add-custom-local-feed.sh "${GITHUB_WORKSPACE}"
 #       - run: /install-custom-feed-packages.sh
 #       - run: /reconfigure.sh
