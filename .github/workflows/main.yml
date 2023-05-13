@@ -13,6 +13,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - run: export MAKEFLAGS="${MAKEFLAGS} OUTPUT_DIR=${{ github.workspace }}/bin -s"
+      - run: export action_path="${{ github.action_path	}}
+      - run: export event_path="${{ github.event_path	}}
+      - run: export github_path="${{ github.path }}
+      - run: export workflow_ref="${{ github.workflow_ref }}
       - run: ls && pwd
 #       - run: /add-custom-local-feed.sh "${{ github.workspace }}"
 #       - run: /install-custom-feed-packages.sh
