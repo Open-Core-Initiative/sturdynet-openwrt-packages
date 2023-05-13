@@ -27,30 +27,27 @@ jobs:
       - run: mkdir -p "${GITHUB_WORKSPACE}/bin"
       - run: echo "MAKEFLAGS=${MAKEFLAGS} OUTPUT_DIR=${GITHUB_WORKSPACE}/bin -s" >> $GITHUB_ENV
       - run: echo "${GITHUB_WORKSPACE}/public/${GITHUB_REF##*/}"
-      - run: echo "${GITHUB_WORKSPACE}"
-      - run: echo "${GITHUB_HEAD_REF}"
-      - run: echo "${GITHUB_REF##*/}"
-#       - run: /add-custom-local-feed.sh "${GITHUB_WORKSPACE}"
-#       - run: /install-custom-feed-packages.sh
-#       - run: /reconfigure.sh
-#       - run: /make-custom-feed-packages.sh
-#       - run: /make-index.sh "${GITHUB_WORKSPACE}/key-build"
-#       - run: mkdir -p "${GITHUB_WORKSPACE}/public/${GITHUB_HEAD_REF}"
-#       - run: /generate-repository.sh "${GITHUB_WORKSPACE}/public/${GITHUB_HEAD_REF}" "${GITHUB_WORKSPACE}/key-build.pub" "${GITHUB_WORKSPACE}/bin" "${GITHUB_WORKSPACE}/47bc41ad54a6601d"
-#       - run: mv LICENSE "${GITHUB_WORKSPACE}/public/${GITHUB_HEAD_REF}"
-#       - run: ./generate-webpage.sh "${GITHUB_WORKSPACE}/public/${GITHUB_HEAD_REF}" > "${GITHUB_WORKSPACE}/public/${GITHUB_HEAD_REF}/index.html"
-#       - name: Setup Pages
-#         uses: actions/configure-pages@v3
-#       - name: Upload artifact
-#         uses: actions/upload-pages-artifact@v1
-#         with:
-#           # Upload public repository
-#           path: public
-#       - name: Deploy to GitHub Pages
-#         id: deployment
-#         uses: actions/deploy-pages@v2
-#       - name: Use the Upload Artifact GitHub Action
-#         uses: actions/upload-artifact@v2
-#         with: 
-#           name: "${GITHUB_HEAD_REF}"
-#           path: public
+      - run: /add-custom-local-feed.sh "${GITHUB_WORKSPACE}"
+      - run: /install-custom-feed-packages.sh
+      - run: /reconfigure.sh
+      - run: /make-custom-feed-packages.sh
+      - run: /make-index.sh "${GITHUB_WORKSPACE}/key-build"
+      - run: mkdir -p "${GITHUB_WORKSPACE}/public/${GITHUB_REF##*/}"
+      - run: /generate-repository.sh "${GITHUB_WORKSPACE}/public/${GITHUB_REF##*/}" "${GITHUB_WORKSPACE}/key-build.pub" "${GITHUB_WORKSPACE}/bin" "${GITHUB_WORKSPACE}/47bc41ad54a6601d"
+      - run: mv LICENSE "${GITHUB_WORKSPACE}/public/${GITHUB_REF##*/}"
+      - run: ./generate-webpage.sh "${GITHUB_WORKSPACE}/public/${GITHUB_REF##*/}" > "${GITHUB_WORKSPACE}/public/${GITHUB_REF##*/}/index.html"
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          # Upload public repository
+          path: public
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+      - name: Use the Upload Artifact GitHub Action
+        uses: actions/upload-artifact@v2
+        with: 
+          name: "${GITHUB_REF##*/}"
+          path: public
