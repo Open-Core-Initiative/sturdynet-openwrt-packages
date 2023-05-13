@@ -13,9 +13,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - run: export MAKEFLAGS="${MAKEFLAGS} OUTPUT_DIR=${PWD}/bin -s"
-      - run: ls && pwd
+      - run: echo ${MAKEFLAGS}
       - run: cd flow_broker && ls && cd ..
-      - run: /add-custom-local-feed.sh .
+#       - run: /add-custom-local-feed.sh .
 #       - run: /install-custom-feed-packages.sh
 #       - run: /reconfigure.sh
 #       - run: /make-custom-feed-packages.sh
