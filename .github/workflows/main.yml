@@ -12,13 +12,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - run: export MAKEFLAGS="${MAKEFLAGS} OUTPUT_DIR=${{ github.workspace }}/bin -s"
-      - run: export action_path="${{ github.action_path	}}"
-      - run: export event_path="${{ github.event_path	}}"
-      - run: export github_path="${{ github.path }}"
-      - run: export workflow_ref="${{ github.workflow_ref }}"
+      - run: export MAKEFLAGS="${MAKEFLAGS} OUTPUT_DIR=${PWD}/bin -s"
       - run: ls && pwd
-#       - run: /add-custom-local-feed.sh "${{ github.workspace }}"
+      - run: cd /flow_broker && ls && cd ..
+      - run: /add-custom-local-feed.sh .
 #       - run: /install-custom-feed-packages.sh
 #       - run: /reconfigure.sh
 #       - run: /make-custom-feed-packages.sh
