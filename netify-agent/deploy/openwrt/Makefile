@@ -5,7 +5,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=@PACKAGE_TARNAME@
+PKG_NAME:=netifyd
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Darryl Sokoloski <darryl@egloo.ca>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -15,15 +15,15 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=@GIT_SOURCE_URL@
-PKG_SOURCE_DATE:=@GIT_LAST_COMMIT_DATE@
-PKG_SOURCE_VERSION:=v@PACKAGE_VERSION@
+PKG_SOURCE_URL:=https://gitlab.com/netify.ai/public/netify-agent.git
+PKG_SOURCE_DATE:=2023-05-20
+PKG_SOURCE_VERSION:=v4.5.13
 #PKG_SOURCE_VERSION:=@GIT_LAST_COMMIT_HASH@
 PKG_MIRROR_HASH:=whatever
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/@PACKAGE_TARNAME@
+define Package/netifyd
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Netify Agent
@@ -35,7 +35,7 @@ define Package/@PACKAGE_TARNAME@
   DEPENDS+=+libstdcpp
 endef
 
-define Package/@PACKAGE_TARNAME@/description
+define Package/netifyd/description
 The Netify Agent is a deep-packet inspection server which detects network
 protocols and applications.  These detections can be saved locally, served over
 a UNIX or TCP socket, and/or "pushed" (via HTTP POSTs) to a remote third-party
@@ -43,9 +43,9 @@ server.  Flow metadata, network statistics, and detection classifications are
 JSON encoded for easy consumption by third-party applications.
 endef
 
-define Package/@PACKAGE_TARNAME@/conffiles
-/etc/@PACKAGE_TARNAME@.conf
-/etc/config/@PACKAGE_TARNAME@
+define Package/netifyd/conffiles
+/etc/netifyd.conf
+/etc/config/netifyd
 /etc/netifyd/agent.uuid
 /etc/netifyd/serial.uuid
 /etc/netifyd/site.uuid
@@ -69,8 +69,8 @@ CONFIGURE_ARGS+= \
 endif
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/@PACKAGE_TARNAME@
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/@PACKAGE_TARNAME@/*.h $(1)/usr/include/@PACKAGE_TARNAME@
+	$(INSTALL_DIR) $(1)/usr/include/netifyd
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/netifyd/*.h $(1)/usr/include/netifyd
 	$(INSTALL_DIR) $(1)/usr/include/netifyd/pcap-compat
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/netifyd/pcap-compat/*.h $(1)/usr/include/netifyd/pcap-compat
 	$(INSTALL_DIR) $(1)/usr/include/netifyd/nlohmann
@@ -80,12 +80,12 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/ndpi
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/ndpi/*.h $(1)/usr/include/ndpi
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib@PACKAGE_TARNAME@.{a,so*} $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetifyd.{a,so*} $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib@PACKAGE_TARNAME@.pc $(1)/usr/lib/pkgconfig
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libnetifyd.pc $(1)/usr/lib/pkgconfig
 endef
 
-define Package/@PACKAGE_TARNAME@/install
+define Package/netifyd/install
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/netifyd.conf $(1)/etc
 	$(INSTALL_DIR) $(1)/etc/config
@@ -95,7 +95,7 @@ define Package/@PACKAGE_TARNAME@/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/netifyd $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib@PACKAGE_TARNAME@.so.* $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetifyd.so.* $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/etc/netifyd
 	$(INSTALL_DIR) $(1)/etc/netifyd/plugins.d
 	$(INSTALL_DIR) $(1)/etc/netifyd/domains.d
@@ -105,4 +105,4 @@ define Package/@PACKAGE_TARNAME@/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/functions.sh $(1)/usr/share/netifyd
 endef
 
-$(eval $(call BuildPackage,@PACKAGE_TARNAME@))
+$(eval $(call BuildPackage,netifyd))
