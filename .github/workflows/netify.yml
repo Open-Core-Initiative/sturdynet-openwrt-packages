@@ -1,9 +1,9 @@
 name: building netify package
 
 on:
+  # Runs on pushes targeting the default branch
   push:
-    # only trigger on branches, not on tags
-    branches: '**'
+    branches: ["main","netify"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
