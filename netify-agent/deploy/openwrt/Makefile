@@ -46,9 +46,9 @@ endef
 define Package/netifyd/conffiles
 /etc/netifyd.conf
 /etc/config/netifyd
-/etc/netifyd/agent.uuid
-/etc/netifyd/serial.uuid
-/etc/netifyd/site.uuid
+/etc/netify.d/agent.uuid
+/etc/netify.d/serial.uuid
+/etc/netify.d/site.uuid
 endef
 
 TARGET_CFLAGS+=-ffunction-sections -fdata-sections -Wno-psabi
@@ -57,11 +57,11 @@ TARGET_LDFLAGS+=-Wl,--gc-sections
 
 CONFIGURE_ARGS+= \
 	--sharedstatedir=/var/run \
+	--enable-lean-and-mean \
 	--disable-libtcmalloc \
 	--disable-jemalloc \
 	--without-systemdsystemunitdir \
-	--without-tmpfilesdir \
-	# --enable-lean-and-mean \
+	--without-tmpfilesdir
 
 ifneq ($(CONFIG_LIBCURL_ZLIB),y)
 CONFIGURE_ARGS+= \
@@ -96,11 +96,9 @@ define Package/netifyd/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/netifyd $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetifyd.so.* $(1)/usr/lib
-	$(INSTALL_DIR) $(1)/etc/netifyd
-	$(INSTALL_DIR) $(1)/etc/netifyd/plugins.d
-	$(INSTALL_DIR) $(1)/etc/netifyd/domains.d
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/netify-apps.conf $(1)/etc/netifyd
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/netify-categories.json $(1)/etc/netifyd
+	$(INSTALL_DIR) $(1)/etc/netify.d
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/netify-apps.conf $(1)/etc/netify.d
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/netify-categories.json $(1)/etc/netify.d
 	$(INSTALL_DIR) $(1)/usr/share/netifyd
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/functions.sh $(1)/usr/share/netifyd
 endef
