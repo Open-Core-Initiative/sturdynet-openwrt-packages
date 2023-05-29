@@ -16,7 +16,7 @@ PKG_INSTALL:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.com/netify.ai/public/netify-agent.git
-PKG_SOURCE_DATE:=2023-05-16
+PKG_SOURCE_DATE:=2023-05-3
 PKG_SOURCE_VERSION:=e8db613cc3507aa1624de51a2bba4e874bf882d9
 #PKG_SOURCE_VERSION:=@GIT_LAST_COMMIT_HASH@
 PKG_MIRROR_HASH:=whatever
@@ -57,7 +57,6 @@ TARGET_LDFLAGS+=-Wl,--gc-sections
 
 CONFIGURE_ARGS+= \
 	--sharedstatedir=/var/run \
-	# --enable-lean-and-mean
 	--disable-libtcmalloc \
 	--disable-jemalloc \
 	--without-systemdsystemunitdir \
