@@ -57,11 +57,11 @@ TARGET_LDFLAGS+=-Wl,--gc-sections
 
 CONFIGURE_ARGS+= \
 	--sharedstatedir=/var/run \
-	--enable-lean-and-mean \
 	--disable-libtcmalloc \
 	--disable-jemalloc \
 	--without-systemdsystemunitdir \
-	--without-tmpfilesdir
+	--without-tmpfilesdir \
+	# --enable-lean-and-mean \
 
 ifneq ($(CONFIG_LIBCURL_ZLIB),y)
 CONFIGURE_ARGS+= \
