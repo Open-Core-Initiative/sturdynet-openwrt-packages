@@ -1,14 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=l7stats
-PKG_SOURCE_VERSION:=542ca21c49f8768ed5cba2e738bfb6700ceb47ed
+PKG_SOURCE_VERSION:=ab7b5a149093663e0665a7abedebbfb7b3656d76
 PKG_SOURCE_DATE=2023-03-03
 PKG_RELEASE:=v1.2
 PKG_MAINTAINER:=Michael Foxworthy <mfoxworthy@ipsquared.com>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mfoxworthy/l7stats.git
-PKG_MIRROR_HASH:=ab7b5a149093663e0665a7abedebbfb7b3656d76
+PKG_MIRROR_HASH:=skip
 
 PKG_LICENSE:=GPLv3
 
