@@ -1,8 +1,6 @@
 #!/bin/bash
 
-IFS=$'\n'
 PUBLIC=${1:-public}
-URL="http://${CI_PROJECT_NAMESPACE}.gitlab.io/${CI_PROJECT_NAME}/"
 
 function makeLink() {
 	SPACE=${1}
@@ -19,17 +17,83 @@ cat <<END
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8">
-	<title>${CI_PROJECT_NAME}, ${CI_COMMIT_REF_NAME}/${CI_COMMIT_SHA}</title>
-	<link rel="stylesheet" href="https://www.google.com/css/maia.css">
+	<meta charset="UTF-8" />
+    	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Sturdynet Package Downloads</title>
+	<style>
+	      body {
+	        font-family: "Courier New", monospace;
+	        background-color: #f0f0f0;
+	        color: #333;
+	        display: flex;
+	        flex-direction: column;
+	        align-items: center;
+	        min-height: 100vh;
+	        margin: 0;
+	      }
+	
+	      pre {
+	        font-size: 16px;
+	      }
+	
+	      @media (max-width: 768px) {
+	        pre {
+	          font-size: 12px;
+	        }
+	      }
+	
+	      .ascii-table {
+	        margin-top: 5px;
+	        font-size: 20px;
+	        text-align: center;
+	        border-collapse: collapse;
+	      }
+	
+	      .ascii-table th,
+	      .ascii-table td {
+	        padding: 5px;
+	        border: 1px dashed #333;
+	      }
+	
+	      .ascii-table th {
+	        background-color: #f0f0f0;
+	      }
+	
+	      .ascii-table ul:not(:last-child) {
+	        border-bottom: 1px dashed #333;
+	      }
+	
+	      .ascii-table ul {
+	        list-style-type: none; /* Remove bullets */
+	        padding: 5px; /* Remove padding */
+	        margin: 5px; /* Remove margins */
+	      }
+
+	      a:link { text-decoration: none; }
+	    </style>
 </head>
 <body>
-	<h1>${CI_PROJECT_NAME}</h1>
-	<p>
-		<a href="${CI_PROJECT_URL}/tree/${CI_COMMIT_REF_NAME}">${CI_COMMIT_REF_NAME}</a> build
-		on <em>$(date -R)</em>,
-		commit <a href="${CI_PROJECT_URL}/commit/${CI_COMMIT_SHA}">${CI_COMMIT_SHA}</a>
-	</p>
+	<pre>
+            _____ __                 __                 __ 
+           / ___// /___  ___________/ /_  ______  ___  / /_
+           \__ \/ __/ / / / ___/ __  / / / / __ \/ _ \/ __/
+          ___/ / /_/ /_/ / /  / /_/ / /_/ / / / /  __/ /_  
+         /____/\__/\__,_/_/   \__,_/\__, /_/ /_/\___/\__/  
+                                   /____/                  
+                        SturdyNet v1.0-Beta
+        -----------------------------------------------------
+                    Based on OpenWrt ${OPENWRT_VERSION}
+               Build on <em>$(date -R)</em>
+                        Target: <b>${GITHUB_REF##*/}</b>
+        ----------------------------------------------------- 	
+	</pre>
+	<table class="ascii-table">
+	      <tr>
+	        <th>SDK and Build Keys</th>
+			<th>Packages</th>
+	      </tr>
+	      <tr>
+	        <td>
 END
 
 for I in releases/*/packages/*; do
@@ -38,31 +102,22 @@ for I in releases/*/packages/*; do
 	FILE="${CI_PROJECT_NAME//-/_}_${VERSION//./_}"
 
 cat <<END
-	<h2>OpenWRT ${VERSION}, Platform ${ARCH}</h2>
-	<h3>SDK and Build Keys</h3>
 	<ul>
 $(makeLink "		" ${I}/../../47bc41ad54a6601d ${I}/../../openwrt-sdk.txt ${I}/../../key-build*)
 	</ul>
-	<h3>Custom Packages</h3>
+	</td>
+	<td>
 	<ul>
 $(makeLink "		" ${I}/custom/*)
 	</ul>
-	<h3>Usage in OpenWrt</h3>
-	<pre>
-uclient-fetch -O /tmp/${FILE}.pub ${URL}releases/${VERSION}/key-build.pub &amp;&amp; opkg-key add /tmp/${FILE}.pub
-echo "src/gz ${FILE} ${URL}${I}/custom" &gt; /etc/opkg/${FILE}.conf
-	</pre>
 END
 
 done
 
 cat <<END
-	<h2>Development</h2>
-	<ul>
-		<li><a href="${CI_PROJECT_URL}">source-code repository</a><br /><code>git clone ${CI_PROJECT_URL}.git</code></li>
-	</ul>
-	<h2>License</h2>
-	<pre>$(cat LICENSE | tr -d '<>&')</pre>
+	</td>
+    </tr>
+    </table>
 </body>
 </html>
 END
