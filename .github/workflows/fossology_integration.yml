@@ -1,0 +1,331 @@
+name: Fossolgy Scanner
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["ipq40xx"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - run: sudo apt-get update && sudo apt-get install zip -y && sudo apt-get install jq -y
+      - run: zip -r ${GITHUB_REF##*/}.zip . -x '*.git*'
+      - name: MANAGING ZIP FILE PERMISSIONS
+        run: chmod 777 ${GITHUB_REF##*/}.zip && ls -l
+      - run: echo "TOKEN_EXPIRY_DATE=$(date -d '+1 day' '+%Y-%m-%d')" >> $GITHUB_ENV
+      - run: echo "TOKEN_NAME=${GITHUB_REF##*/}-$(date '+%H%M%d%m%Y%S')" >> $GITHUB_ENV # Token name should not exceed 40 characters.
+      - run: echo "UPLOAD_FILE_PATH=${GITHUB_WORKSPACE}/${GITHUB_REF##*/}.zip" >> $GITHUB_ENV
+      - name: LOGIN TO FOSSOLOGY
+        run: |
+          FOSSY_LOGIN_RESPONSE=$( \
+          curl --request POST \
+          --location '${{ secrets.FOSSY_BASE_URL }}/api/v1/tokens' \
+          --header 'Content-Type:application/json' \
+          --data '{"username":"${{ secrets.FOSSY_USERNAME }}","password":"${{ secrets.FOSSY_USERNAME }}","token_name":"${{ env.TOKEN_NAME }}","token_scope":"write","token_expire":"${{ env.TOKEN_EXPIRY_DATE }}"}' \
+          )
+          echo ::add-mask::$FOSSY_LOGIN_RESPONSE
+          echo FOSSY_LOGIN_RESPONSE="$FOSSY_LOGIN_RESPONSE" >> $GITHUB_ENV
+      - name: GETTING FOSSOLOGY BEARER TOKEN
+        run: |
+          FOSSY_BEARER_TOKEN=$( \
+          echo $FOSSY_LOGIN_RESPONSE | jq -r '.Authorization' \
+          )
+          echo ::add-mask::$FOSSY_BEARER_TOKEN
+          echo FOSSY_BEARER_TOKEN="$FOSSY_BEARER_TOKEN" >> $GITHUB_ENV
+      - run: echo "FILE_DESCRIPTION=Repository name:${GITHUB_REPOSITORY#*/}, Branch:${GITHUB_REF##*/}, Date:$(date '+%H:%M %d/%m/%Y')" >> $GITHUB_ENV
+      - name: UPLOADING ZIP FILE TO FOSSOLOGY
+        run: |
+          FOSSY_UPLOAD_RESPONSE=$( \
+          curl -v --location '${{ secrets.FOSSY_BASE_URL }}/api/v1/uploads' \
+          --header 'Authorization: ${{ env.FOSSY_BEARER_TOKEN }}' \
+          --header 'folderId: 1' \
+          --header 'uploadDescription: ${{ env.FILE_DESCRIPTION }}' \
+          --header 'uploadType: file' \
+          --header 'public: public' \
+          --form 'fileInput=@"${{ env.UPLOAD_FILE_PATH }}"' \
+          )
+          echo FOSSY_UPLOAD_RESPONSE="$FOSSY_UPLOAD_RESPONSE" >> $GITHUB_ENV
+      - name: GETTING FOSSOLOGY UPLOAD ID
+        run: |
+          FOSSY_UPLOAD_ID=$( \
+          echo $FOSSY_UPLOAD_RESPONSE | jq -r '.message' \
+          )
+          echo FOSSY_UPLOAD_ID="$FOSSY_UPLOAD_ID" >> $GITHUB_ENV
+      - name: CHECKING FOR UPLOAD STATUS
+        run: |
+          max_retries=5
+          retries=0
+
+          while [ $retries -lt $max_retries ]; do
+            response_json=$( \
+            curl --location '${{ secrets.FOSSY_BASE_URL }}/api/v1/jobs?upload=${{ env.FOSSY_UPLOAD_ID }}' \
+            --header 'Authorization: ${{ env.FOSSY_BEARER_TOKEN }}' \
+            )
+
+            actual_status=$( \
+            echo "$response_json" | jq -r '.[].status' \
+            )
+            
+            if [ "$actual_status" = "Completed" ]; then
+              echo "Upload status: $actual_status"
+              break
+            else
+              echo "Upload status is $actual_status. Retrying in 60 Seconds..."
+              sleep 60  # Wait for 60 seconds before the next iteration
+              retries=$((retries + 1))
+            fi
+          done
+
+          if [ $retries -eq $max_retries ]; then
+            echo "Max retries reached. Unable to get the upload file."
+            exit 1
+          fi
+      - name: SCHEDULE SCAN AGENTS
+        run: |
+          FOSSY_SCAN_RESPONSE=$( \
+          curl -v --location '${{ secrets.FOSSY_BASE_URL }}/api/v1/jobs' \
+          --header 'Authorization: ${{ env.FOSSY_BEARER_TOKEN }}' \
+          --header 'Content-Type: application/json' \
+          --header 'folderId: 1' \
+          --header 'uploadId: ${{ env.FOSSY_UPLOAD_ID }}' \
+          --data "{
+             \"analysis\": {
+                \"bucket\": true,
+                \"copyright_email_author\": true,
+                \"ecc\": true,
+                \"keyword\": true,
+                \"mime\": true,
+                \"monk\": true,
+                \"nomos\": true,
+                \"package\": true,
+                \"scancode\": true,
+                \"ojo\": true,
+                \"spasht\": true,
+                \"reso\": true
+             },
+             \"decider\": {
+                \"nomos_monk\": true,
+                \"bulk_reused\": true,
+                \"new_scanner\": true
+             }
+          }" \
+          )
+          echo FOSSY_SCAN_RESPONSE="$FOSSY_SCAN_RESPONSE" >> $GITHUB_ENV
+      - name: GETTING FOSSOLOGY SCAN ID
+        run: |
+          FOSSY_SCAN_ID=$( \
+          echo $FOSSY_SCAN_RESPONSE | jq -r '.message' \
+          )
+          echo FOSSY_SCAN_ID="$FOSSY_SCAN_ID" >> $GITHUB_ENV
+      - run: mkdir public
+      - name: GENERATE dep5 REPORT
+        run: |
+          FOSSY_DEP5_RESPONSE=$( \
+          curl -v --location '${{ secrets.FOSSY_BASE_URL }}/api/v1/report' \
+          --header 'Authorization: ${{ env.FOSSY_BEARER_TOKEN }}' \
+          --header 'reportFormat: dep5' \
+          --header 'uploadId: ${{ env.FOSSY_UPLOAD_ID }}' \
+          )
+          echo FOSSY_DEP5_RESPONSE="$FOSSY_DEP5_RESPONSE" >> $GITHUB_ENV
+      - name: GET dep5 REPORT URL
+        run: |
+          FOSSY_DEP5_REPORT_URL=$( \
+          echo $FOSSY_DEP5_RESPONSE | jq -r '.message' \
+          )
+          echo FOSSY_DEP5_REPORT_URL="$FOSSY_DEP5_REPORT_URL" >> $GITHUB_ENV
+      - name: DOWNLOAD dep5 REPORT
+        run: |
+          max_retries=5
+          retries=0
+
+          while [ $retries -lt $max_retries ]; do
+            response_code=$( \
+            curl -s -o public/dep5.txt -w "%{http_code}" --location '${{ env.FOSSY_DEP5_REPORT_URL }}' \
+            --header 'Authorization: ${{ env.FOSSY_BEARER_TOKEN }}' \
+            )
+            
+            if [ "$response_code" = "200" ]; then
+              echo "Response code is $response_code. Downloading..."
+              break
+            else
+              echo "Response code is $response_code. Retrying in 60 Seconds..."
+              sleep 60  # Wait for 60 seconds before the next iteration
+              retries=$((retries + 1))
+            fi
+          done
+
+          if [ $retries -eq $max_retries ]; then
+            echo "Max retries reached. Unable to download the report."
+            exit 1
+          fi
+      - name: GENERATE readmeoss REPORT
+        run: |
+          FOSSY_READMEOSS_RESPONSE=$( \
+          curl -v --location '${{ secrets.FOSSY_BASE_URL }}/api/v1/report' \
+          --header 'Authorization: ${{ env.FOSSY_BEARER_TOKEN }}' \
+          --header 'reportFormat: readmeoss' \
+          --header 'uploadId: ${{ env.FOSSY_UPLOAD_ID }}' \
+          )
+          echo FOSSY_READMEOSS_RESPONSE="$FOSSY_READMEOSS_RESPONSE" >> $GITHUB_ENV
+      - name: GET readmeoss REPORT URL
+        run: |
+          FOSSY_READMEOSS_REPORT_URL=$( \
+          echo $FOSSY_READMEOSS_RESPONSE | jq -r '.message' \
+          )
+          echo FOSSY_READMEOSS_REPORT_URL="$FOSSY_READMEOSS_REPORT_URL" >> $GITHUB_ENV
+      - name: DOWNLOAD readmeoss REPORT
+        run: |
+          max_retries=5
+          retries=0
+
+          while [ $retries -lt $max_retries ]; do
+            response_code=$( \
+            curl -s -o public/readmeoss.md -w "%{http_code}" --location '${{ env.FOSSY_READMEOSS_REPORT_URL }}' \
+            --header 'Authorization: ${{ env.FOSSY_BEARER_TOKEN }}' \
+            )
+            
+            if [ "$response_code" = "200" ]; then
+              echo "Response code is $response_code. Downloading..."
+              break
+            else
+              echo "Response code is $response_code. Retrying in 60 Seconds..."
+              sleep 60  # Wait for 60 seconds before the next iteration
+              retries=$((retries + 1))
+            fi
+          done
+
+          if [ $retries -eq $max_retries ]; then
+            echo "Max retries reached. Unable to download the report."
+            exit 1
+          fi
+      - name: GENERATE spdx2 REPORT
+        run: |
+          FOSSY_SPDX2_RESPONSE=$( \
+          curl -v --location '${{ secrets.FOSSY_BASE_URL }}/api/v1/report' \
+          --header 'Authorization: ${{ env.FOSSY_BEARER_TOKEN }}' \
+          --header 'reportFormat: spdx2' \
+          --header 'uploadId: ${{ env.FOSSY_UPLOAD_ID }}' \
+          )
+          echo FOSSY_SPDX2_RESPONSE="$FOSSY_SPDX2_RESPONSE" >> $GITHUB_ENV
+      - name: GET spdx2 REPORT URL
+        run: |
+          FOSSY_SPDX2_REPORT_URL=$( \
+          echo $FOSSY_SPDX2_RESPONSE | jq -r '.message' \
+          )
+          echo FOSSY_SPDX2_REPORT_URL="$FOSSY_SPDX2_REPORT_URL" >> $GITHUB_ENV
+      - name: DOWNLOAD spdx2 REPORT
+        run: |
+          max_retries=5
+          retries=0
+
+          while [ $retries -lt $max_retries ]; do
+            response_code=$( \
+            curl -s -o public/spdx2.spdx.rdf -w "%{http_code}" --location '${{ env.FOSSY_SPDX2_REPORT_URL }}' \
+            --header 'Authorization: ${{ env.FOSSY_BEARER_TOKEN }}' \
+            )
+            
+            if [ "$response_code" = "200" ]; then
+              echo "Response code is $response_code. Downloading..."
+              break
+            else
+              echo "Response code is $response_code. Retrying in 60 Seconds..."
+              sleep 60  # Wait for 60 seconds before the next iteration
+              retries=$((retries + 1))
+            fi
+          done
+
+          if [ $retries -eq $max_retries ]; then
+            echo "Max retries reached. Unable to download the report."
+            exit 1
+          fi
+      - name: GENERATE unifiedreport REPORT
+        run: |
+          FOSSY_UNIFIEDREPORT_RESPONSE=$( \
+          curl -v --location '${{ secrets.FOSSY_BASE_URL }}/api/v1/report' \
+          --header 'Authorization: ${{ env.FOSSY_BEARER_TOKEN }}' \
+          --header 'reportFormat: unifiedreport' \
+          --header 'uploadId: ${{ env.FOSSY_UPLOAD_ID }}' \
+          )
+          echo FOSSY_UNIFIEDREPORT_RESPONSE="$FOSSY_UNIFIEDREPORT_RESPONSE" >> $GITHUB_ENV
+      - name: GET unifiedreport REPORT URL
+        run: |
+          FOSSY_UNIFIEDREPORT_REPORT_URL=$( \
+          echo $FOSSY_UNIFIEDREPORT_RESPONSE | jq -r '.message' \
+          )
+          echo FOSSY_UNIFIEDREPORT_REPORT_URL="$FOSSY_UNIFIEDREPORT_REPORT_URL" >> $GITHUB_ENV
+      - name: DOWNLOAD unifiedreport REPORT
+        run: |
+          max_retries=5
+          retries=0
+
+          while [ $retries -lt $max_retries ]; do
+            response_code=$( \
+            curl -s -o public/unifiedreport.docx -w "%{http_code}" --location '${{ env.FOSSY_UNIFIEDREPORT_REPORT_URL }}' \
+            --header 'Authorization: ${{ env.FOSSY_BEARER_TOKEN }}' \
+            )
+            
+            if [ "$response_code" = "200" ]; then
+              echo "Response code is $response_code. Downloading..."
+              break
+            else
+              echo "Response code is $response_code. Retrying in 60 Seconds..."
+              sleep 60  # Wait for 60 seconds before the next iteration
+              retries=$((retries + 1))
+            fi
+          done
+
+          if [ $retries -eq $max_retries ]; then
+            echo "Max retries reached. Unable to download the report."
+            exit 1
+          fi
+      - name: GENERATE decisionexporter REPORT
+        run: |
+          FOSSY_DECISION_EXPORTER_RESPONSE=$( \
+          curl -v --location '${{ secrets.FOSSY_BASE_URL }}/api/v1/report' \
+          --header 'Authorization: ${{ env.FOSSY_BEARER_TOKEN }}' \
+          --header 'reportFormat: decisionexporter' \
+          --header 'uploadId: ${{ env.FOSSY_UPLOAD_ID }}' \
+          )
+          echo FOSSY_DECISION_EXPORTER_RESPONSE="$FOSSY_DECISION_EXPORTER_RESPONSE" >> $GITHUB_ENV
+      - name: GET decisionexporter REPORT URL
+        run: |
+          FOSSY_DECISION_EXPORTER_REPORT_URL=$( \
+          echo $FOSSY_DECISION_EXPORTER_RESPONSE | jq -r '.message' \
+          )
+          echo FOSSY_DECISION_EXPORTER_REPORT_URL="$FOSSY_DECISION_EXPORTER_REPORT_URL" >> $GITHUB_ENV
+      - name: DOWNLOAD decisionexporter REPORT
+        run: |
+          max_retries=5
+          retries=0
+
+          while [ $retries -lt $max_retries ]; do
+            response_code=$( \
+            curl -s -o public/decisionexporter.json -w "%{http_code}" --location '${{ env.FOSSY_DECISION_EXPORTER_REPORT_URL }}' \
+            --header 'Authorization: ${{ env.FOSSY_BEARER_TOKEN }}' \
+            )
+            
+            if [ "$response_code" = "200" ]; then
+              echo "Response code is $response_code. Downloading..."
+              break
+            else
+              echo "Response code is $response_code. Retrying in 60 Seconds..."
+              sleep 60  # Wait for 60 seconds before the next iteration
+              retries=$((retries + 1))
+            fi
+          done
+
+          if [ $retries -eq $max_retries ]; then
+            echo "Max retries reached. Unable to download the report."
+            exit 1
+          fi
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          # Upload public repository
+          path: public
