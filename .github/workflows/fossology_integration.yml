@@ -132,6 +132,7 @@ jobs:
           --header 'reportFormat: dep5' \
           --header 'uploadId: ${{ env.FOSSY_UPLOAD_ID }}' \
           )
+          echo ::add-mask::$FOSSY_DEP5_RESPONSE
           echo FOSSY_DEP5_RESPONSE="$FOSSY_DEP5_RESPONSE" >> $GITHUB_ENV
       - name: GET dep5 REPORT URL
         run: |
@@ -172,6 +173,7 @@ jobs:
           --header 'reportFormat: readmeoss' \
           --header 'uploadId: ${{ env.FOSSY_UPLOAD_ID }}' \
           )
+          echo ::add-mask::$FOSSY_READMEOSS_RESPONSE
           echo FOSSY_READMEOSS_RESPONSE="$FOSSY_READMEOSS_RESPONSE" >> $GITHUB_ENV
       - name: GET readmeoss REPORT URL
         run: |
@@ -212,6 +214,7 @@ jobs:
           --header 'reportFormat: spdx2' \
           --header 'uploadId: ${{ env.FOSSY_UPLOAD_ID }}' \
           )
+          echo ::add-mask::$FOSSY_SPDX2_RESPONSE
           echo FOSSY_SPDX2_RESPONSE="$FOSSY_SPDX2_RESPONSE" >> $GITHUB_ENV
       - name: GET spdx2 REPORT URL
         run: |
@@ -252,6 +255,7 @@ jobs:
           --header 'reportFormat: unifiedreport' \
           --header 'uploadId: ${{ env.FOSSY_UPLOAD_ID }}' \
           )
+          echo ::add-mask::$FOSSY_UNIFIEDREPORT_RESPONSE
           echo FOSSY_UNIFIEDREPORT_RESPONSE="$FOSSY_UNIFIEDREPORT_RESPONSE" >> $GITHUB_ENV
       - name: GET unifiedreport REPORT URL
         run: |
@@ -292,6 +296,7 @@ jobs:
           --header 'reportFormat: decisionexporter' \
           --header 'uploadId: ${{ env.FOSSY_UPLOAD_ID }}' \
           )
+          echo ::add-mask::$FOSSY_DECISION_EXPORTER_RESPONSE
           echo FOSSY_DECISION_EXPORTER_RESPONSE="$FOSSY_DECISION_EXPORTER_RESPONSE" >> $GITHUB_ENV
       - name: GET decisionexporter REPORT URL
         run: |
