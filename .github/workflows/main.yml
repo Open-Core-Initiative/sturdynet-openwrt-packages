@@ -1,9 +1,9 @@
-name: building sturdynet packages (target -> ipq40xx)
+name: building sturdynet packages (target -> ap1300)
 
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["ipq40xx"]
+    branches: ["ap1300"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -20,7 +20,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: self-hosted
-    container: sturdynetoci/docker-openwrt-sdk:ipq40xx-22.03.1
+    container: sturdynetoci/docker-openwrt-sdk:ap1300-22.03.1
     steps:
       - name: Checkout
         uses: actions/checkout@v3
